@@ -8,7 +8,27 @@ async function processSubmission(submission: string) {
   console.log(`Code: ${code}`);
   console.log(`Language: ${language}`);
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  const job = JSON.parse(submission);
+  const jobKey = `job:${job.jobId}`;
+
+  await client.hSet(jobKey, {
+    status: "processing",
+    startedAt: new Date().toISOString(),
+  });
+
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    await client.hSet(jobKey, {
+      status: "completed",
+      completedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    await client.hSet(jobKey, {
+      status: "failed",
+      failedAt: new Date().toISOString(),
+    });
+  }
 
   console.log("Finished processing submission for problemId: ", problemId);
 }
